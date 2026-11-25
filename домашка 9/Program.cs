@@ -1,83 +1,48 @@
-﻿using System;
-
-interface IMovable
+using System;
+using System.Collections.Generic;
+interface IGame
 {
-    void MoveHorizontally(int dx);
-    void MoveVertically(int dy);
+    void Play(string team);
 }
 
-abstract class Figure : IMovable
+abstract class Game : IGame
 {
-    protected string color;
-    protected bool visible;
-
-    public Figure(string color, bool visible)
+    public string Name { get; set; }
+    protected abstract void Run(string team);
+    public void Play(string team)
     {
-        this.color = color;
-        this.visible = visible;
-    }
-
-    public virtual void MoveHorizontally(int dx) { }
-    public virtual void MoveVertically(int dy) { }
-
-    public void SetColor(string c) { color = c; }
-    public bool IsVisible() { return visible; }
-
-    public virtual void Print()
-    {
-        Console.WriteLine("Цвет: " + color + ", видимость: " + (visible ? "видимая" : "невидимая"));
+        Console.WriteLine(team + " играет в игру \"" + Name + "\"");
+        Run(team);
     }
 }
+class Beach : Game { public Beach() { Name = "Пляж"; } protected override void Run(string t) { Console.WriteLine(t + ": перетягивание каната на песке!"); } }
+class Mousetrap : Game { public Mousetrap() { Name = "Мышеловка"; } protected override void Run(string t) { Console.WriteLine(t + ": прыжки через ловушки!"); } }
+class Sea : Game { public Sea() { Name = "Море"; } protected override void Run(string t) { Console.WriteLine(t + ": бешеная ванна с водой!"); } }
+class Fishing : Game { public Fishing() { Name = "Рыбалка"; } protected override void Run(string t) { Console.WriteLine(t + ": ловля рыбок в бассейне!"); } }
+class Postman : Game { public Postman() { Name = "Почтальоны"; } protected override void Run(string t) { Console.WriteLine(t + ": доставка посылок на бегу!"); } }
+class Slide : Game { public Slide() { Name = "Горка"; } protected override void Run(string t) { Console.WriteLine(t + ": спуск с огромной горки!"); } }
 
-class Point : Figure
+class ExtraGame : IGame
 {
-    protected int x, y;
-
-    public Point(int x, int y, string color, bool visible) : base(color, visible)
+    private IGame inner;
+    public ExtraGame(IGame inner) { this.inner = inner; }
+    public void Play(string team)
     {
-        this.x = x; this.y = y;
-    }
-
-    public override void MoveHorizontally(int dx) { x += dx; }
-    public override void MoveVertically(int dy) { y += dy; }
-
-    public override void Print()
-    {
-        Console.WriteLine("Точка: координаты (" + x + ", " + y + "), " + color + ", " + (visible ? "видимая" : "невидимая"));
+        inner.Play(team);
+        Console.WriteLine(team + " играет в новую игру \"Батут\" (декоратор добавил её к передаче)");
     }
 }
 
-class Circle : Point
+class BigRaces
 {
-    protected int radius;
+    private List<IGame> games = new List<IGame>();
 
-    public Circle(int x, int y, int r, string color, bool visible) : base(x, y, color, visible)
+    public void AddGame(IGame g) { games.Add(g); }
+
+    public void RunAll(string team)
     {
-        radius = r;
-    }
-
-    public double Area() { return Math.PI * radius * radius; }
-
-    public override void Print()
-    {
-        Console.WriteLine("Окружность: центр (" + x + ", " + y + "), радиус " + radius + ", " + color + ", " + (visible ? "видимая" : "невидимая"));
-    }
-}
-
-class Rectangle : Point
-{
-    protected int width, height;
-
-    public Rectangle(int x, int y, int w, int h, string color, bool visible) : base(x, y, color, visible)
-    {
-        width = w; height = h;
-    }
-
-    public double Area() { return width * height; }
-
-    public override void Print()
-    {
-        Console.WriteLine("Прямоугольник: (" + x + ", " + y + "), " + width + "x" + height + ", " + color + ", " + (visible ? "видимая" : "невидимая"));
+        Console.WriteLine("=== Команда: " + team + " ===");
+        foreach (IGame g in games) g.Play(team);
     }
 }
 
@@ -85,19 +50,16 @@ class Program
 {
     static void Main()
     {
-        Point p = new Point(1, 2, "красный", true);
-        Circle c = new Circle(3, 4, 5, "синий", true);
-        Rectangle r = new Rectangle(0, 0, 4, 6, "зелёный", false);
+        BigRaces show = new BigRaces();
+        show.AddGame(new Beach());
+        show.AddGame(new Mousetrap());
+        show.AddGame(new Sea());
+        show.AddGame(new Fishing());
+        show.AddGame(new Postman());
+        show.AddGame(new Slide());
+        show.AddGame(new ExtraGame(new Slide()));
 
-        p.Print();
-        c.Print();
-        Console.WriteLine("Площадь круга: " + c.Area().ToString("F2"));
-        r.Print();
-        Console.WriteLine("Площадь прямоугольника: " + r.Area());
-
-        c.MoveHorizontally(10);
-        c.SetColor("жёлтый");
-        c.Print();
-        Console.WriteLine("Окружность видима? " + c.IsVisible());
+        string[] teams = { "Россия", "Франция", "Китай", "Казахстан" };
+        foreach (string t in teams) show.RunAll(t);
     }
 }
