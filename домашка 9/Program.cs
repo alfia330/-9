@@ -1,62 +1,83 @@
-﻿using System;
+using System;
 
-interface ICipher
+interface IMovable
 {
-    string Encode(string s);
-    string Decode(string s);
+    void MoveHorizontally(int dx);
+    void MoveVertically(int dy);
 }
 
-class ACipher : ICipher
+abstract class Figure : IMovable
 {
-    public string Encode(string s)
+    protected string color;
+    protected bool visible;
+
+    public Figure(string color, bool visible)
     {
-        char[] c = s.ToCharArray();
-        for (int i = 0; i < c.Length; i++)
-            c[i] = Shift(c[i], 1);
-        return new string(c);
+        this.color = color;
+        this.visible = visible;
     }
 
-    public string Decode(string s)
-    {
-        char[] c = s.ToCharArray();
-        for (int i = 0; i < c.Length; i++)
-            c[i] = Shift(c[i], -1);
-        return new string(c);
-    }
+    public virtual void MoveHorizontally(int dx) { }
+    public virtual void MoveVertically(int dy) { }
 
-    private char Shift(char ch, int dir)
+    public void SetColor(string c) { color = c; }
+    public bool IsVisible() { return visible; }
+
+    public virtual void Print()
     {
-        if (ch >= 'а' && ch <= 'я')
-            return (char)('а' + (ch - 'а' + dir + 32) % 32);
-        if (ch >= 'А' && ch <= 'Я')
-            return (char)('А' + (ch - 'А' + dir + 32) % 32);
-        if (ch >= 'a' && ch <= 'z')
-            return (char)('a' + (ch - 'a' + dir + 26) % 26);
-        if (ch >= 'A' && ch <= 'Z')
-            return (char)('A' + (ch - 'A' + dir + 26) % 26);
-        return ch;
+        Console.WriteLine("Цвет: " + color + ", видимость: " + (visible ? "видимая" : "невидимая"));
     }
 }
 
-class BCipher : ICipher
+class Point : Figure
 {
-    public string Encode(string s)
+    protected int x, y;
+
+    public Point(int x, int y, string color, bool visible) : base(color, visible)
     {
-        char[] c = s.ToCharArray();
-        for (int i = 0; i < c.Length; i++)
-            c[i] = Mirror(c[i]);
-        return new string(c);
+        this.x = x; this.y = y;
     }
 
-    public string Decode(string s) { return Encode(s); }
+    public override void MoveHorizontally(int dx) { x += dx; }
+    public override void MoveVertically(int dy) { y += dy; }
 
-    private char Mirror(char ch)
+    public override void Print()
     {
-        if (ch >= 'а' && ch <= 'я') return (char)('а' + 'я' - ch);
-        if (ch >= 'А' && ch <= 'Я') return (char)('А' + 'Я' - ch);
-        if (ch >= 'a' && ch <= 'z') return (char)('a' + 'z' - ch);
-        if (ch >= 'A' && ch <= 'Z') return (char)('A' + 'Z' - ch);
-        return ch;
+        Console.WriteLine("Точка: координаты (" + x + ", " + y + "), " + color + ", " + (visible ? "видимая" : "невидимая"));
+    }
+}
+
+class Circle : Point
+{
+    protected int radius;
+
+    public Circle(int x, int y, int r, string color, bool visible) : base(x, y, color, visible)
+    {
+        radius = r;
+    }
+
+    public double Area() { return Math.PI * radius * radius; }
+
+    public override void Print()
+    {
+        Console.WriteLine("Окружность: центр (" + x + ", " + y + "), радиус " + radius + ", " + color + ", " + (visible ? "видимая" : "невидимая"));
+    }
+}
+
+class Rectangle : Point
+{
+    protected int width, height;
+
+    public Rectangle(int x, int y, int w, int h, string color, bool visible) : base(x, y, color, visible)
+    {
+        width = w; height = h;
+    }
+
+    public double Area() { return width * height; }
+
+    public override void Print()
+    {
+        Console.WriteLine("Прямоугольник: (" + x + ", " + y + "), " + width + "x" + height + ", " + color + ", " + (visible ? "видимая" : "невидимая"));
     }
 }
 
@@ -64,15 +85,19 @@ class Program
 {
     static void Main()
     {
-        ICipher a = new ACipher();
-        ICipher b = new BCipher();
-        string text = "Привет";
-        string enc = a.Encode(text);
-        Console.WriteLine("ACipher: " + enc);
-        Console.WriteLine("ACipher decode: " + a.Decode(enc));
-        enc = b.Encode(text);
-        Console.WriteLine("BCipher: " + enc);
-        Console.WriteLine("BCipher decode: " + b.Decode(enc));
+        Point p = new Point(1, 2, "красный", true);
+        Circle c = new Circle(3, 4, 5, "синий", true);
+        Rectangle r = new Rectangle(0, 0, 4, 6, "зелёный", false);
+
+        p.Print();
+        c.Print();
+        Console.WriteLine("Площадь круга: " + c.Area().ToString("F2"));
+        r.Print();
+        Console.WriteLine("Площадь прямоугольника: " + r.Area());
+
+        c.MoveHorizontally(10);
+        c.SetColor("жёлтый");
+        c.Print();
+        Console.WriteLine("Окружность видима? " + c.IsVisible());
     }
 }
-
